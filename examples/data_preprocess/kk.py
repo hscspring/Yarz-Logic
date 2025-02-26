@@ -19,7 +19,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--local_dir', default='/home/t2vg-a100-G4-43/data/kk/instruct/3ppl')
     parser.add_argument('--hdfs_dir', default=None)
-    parser.add_argument('--data_path', default='/home/t2vg-a100-G4-43/mem-kk-logic/kk_train_data/3ppl.jsonl')
+    # parser.add_argument('--data_path', default='/home/t2vg-a100-G4-43/mem-kk-logic/kk_train_data/3ppl.jsonl')
     parser.add_argument('--train_size', type=int, default=900)
     parser.add_argument('--test_size', type=int, default=100)
     parser.add_argument('--template_type', type=str, default='qwen-instruct')
@@ -36,7 +36,8 @@ if __name__ == '__main__':
             for line in f:
                 yield json.loads(line)
     
-    raw_dataset = Dataset.from_generator(gen_from_jsonl, gen_kwargs={'path': args.data_path})
+    # raw_dataset = Dataset.from_generator(gen_from_jsonl, gen_kwargs={'path': args.data_path})
+    raw_dataset = load_dataset('K-and-K/knights-and-knaves','train',split="3ppl")
     print(len(raw_dataset))
 
     assert len(raw_dataset) >= TRAIN_SIZE + TEST_SIZE

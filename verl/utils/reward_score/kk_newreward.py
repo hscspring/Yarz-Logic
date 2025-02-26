@@ -53,7 +53,6 @@ def parse_solution_text_format(solution_text: str) -> Dict[str, str]:
             status_dict[name] = role.lower()
             print(f"  Found: {name} → {role}")
         else:
-            ...
             print(f"  [Warning] Unparseable line: '{line}'")
     
     return status_dict
@@ -75,10 +74,10 @@ def parse_model_answer(answer_text: str, expected_names: list) -> Optional[Dict[
     knight_count = answer_text.lower().count('knight')
     knave_count = answer_text.lower().count('knave')
 
-    print(f"  Number of predicted roles: {knight_count + knave_count}")
-    if knight_count + knave_count != len(expected_names):
-        print(f"  [Error] Number of characters mismatch: {knight_count + knave_count} != {len(expected_names)}")
-        return None
+    # print(f"  Number of predicted roles: {knight_count + knave_count}")
+    # if knight_count + knave_count != len(expected_names):
+    #     print(f"  [Error] Number of characters mismatch: {knight_count + knave_count} != {len(expected_names)}")
+    #     return None
 
     for name in expected_names:
         pattern = re.compile(
@@ -93,7 +92,8 @@ def parse_model_answer(answer_text: str, expected_names: list) -> Optional[Dict[
             print(f"  Found: {name} → {role}")
         else:
             print(f"  [Error] Missing identification for {name}")
-            return None
+            # return None
+            continue
     
     return status_dict
 
@@ -136,7 +136,6 @@ def validate_response_structure(processed_str: str) -> bool:
         validation_passed = False
     else:
         print("  Tag sequence validation passed")
-        ...
 
     return validation_passed
 
@@ -157,6 +156,7 @@ def compute_score(solution_str: str,
     """
     print("\n" + "="*80)
     print(" Processing New Sample ".center(80, '='))
+    print(f"format_reward: {format_reward}, answer_reward: {answer_reward}")
     
     # Parse ground truth data
     solution_text = ground_truth.get('solution_text_format', '')
@@ -176,24 +176,32 @@ def compute_score(solution_str: str,
 
     # Validate answer content
     answer_score = 0
-    if format_correct and answer_text:
-        pred_status = parse_model_answer(answer_text, expected_names)
-        if pred_status:
-            print(f"\n[Content Validation]")
-            print(f"  Expected: {gt_status}")
-            print(f"  Predicted: {pred_status}")
-            
-            if pred_status == gt_status:
-                answer_score = 2
-                print("  Content validation: FULL MATCH")
-            else:
-                answer_score = -1.5
-                print("  Content validation: MISMATCH")
+    if format_correct:
+        if answer_text:
+            pred_status = parse_model_answer(answer_text, expected_names)
+            if pred_status:
+                print(f"\n[Content Validation]")
+                print(f"  Expected: {gt_status}")
+                print(f"  Predicted: {pred_status}")
+                
+                if pred_status == gt_status:
+                    answer_score = len(gt_status) * 0.5 + 0.5
+                    print("  Content validation: FULL MATCH")
+                else:
+                    for key,val in gt_status.items():
+                        if val == pred_status.get(key):
+                            answer_score += 0.5
+                        else:
+                            answer_score -= 0.5
+                    # answer_score = -1.5
+                    print("  Content validation: MISMATCH")
         else:
-            answer_score = -2
+            answer_score = -2.5
+            # answer_score = -3.5
             print( "Fail to parse answer")
     else:
-        answer_score = -2
+        # answer_score = -2
+        answer_score = 0
         print("\n[Content Validation] Skipped due to format errors or missing answer")
 
     total_score = format_score + answer_score
