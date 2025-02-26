@@ -298,15 +298,31 @@ def compute_reward_metrics(batch):
 
     reward_metrics = {}
     reward_metrics["reward/mean"] = torch.mean(reward_tensor).detach().item()
-    # Calculate all_correct ratio (value == 3)
     all_correct = torch.sum(reward_tensor == 3).float() / reward_tensor.numel()
     reward_metrics["reward/all_correct_ratio"] = all_correct.detach().item()
-    # Calculate format_error ratio (value == -1)
+
     format_error = torch.sum(reward_tensor == -1).float() / reward_tensor.numel()
     reward_metrics["reward/format_error_ratio"] = format_error.detach().item()
-    # Calculate wrong answer ratio (value == -1)
-    format_error = torch.sum(reward_tensor == -0.5).float() / reward_tensor.numel()
-    reward_metrics["reward/wrong_answer_ratio"] = format_error.detach().item()
+
+    # format_error = torch.sum(reward_tensor == -0.5).float() / reward_tensor.numel()
+    # reward_metrics["reward/wrong_answer_ratio"] = format_error.detach().item()
+    
+    return reward_metrics
+
+
+def compute_reward_metrics2(batch):
+    reward_tensor = batch.batch['token_level_scores'].sum(-1)
+
+    reward_metrics = {}
+    reward_metrics["reward/mean"] = torch.mean(reward_tensor).detach().item()
+    all_correct = torch.sum(reward_tensor == 3.8).float() / reward_tensor.numel()
+    reward_metrics["reward/all_correct_ratio"] = all_correct.detach().item()
+
+    format_error = torch.sum(reward_tensor == -0.8).float() / reward_tensor.numel()
+    reward_metrics["reward/format_error_ratio"] = format_error.detach().item()
+
+    # format_error = torch.sum(reward_tensor == -0.5).float() / reward_tensor.numel()
+    # reward_metrics["reward/wrong_answer_ratio"] = format_error.detach().item()
     
     return reward_metrics
 
@@ -467,7 +483,8 @@ class RayPPOTrainer(object):
 
         metric_dict = {}
         for data_source, rewards in data_source_reward.items():
-            count_equal_3 = sum(1 for reward in rewards if reward == 3)
+            # count_equal_3 = sum(1 for reward in rewards if reward == 3)
+            count_equal_3 = sum(1 for reward in rewards if abs(reward - 3.0) < 0.01)
             total_count = len(rewards)
             metric_dict[f'val/test_score/{data_source}'] = count_equal_3 / total_count if total_count > 0 else 0
 
@@ -620,6 +637,7 @@ class RayPPOTrainer(object):
                 with _timer('step', timing_raw):
                     # generate a batch
                     with _timer('gen', timing_raw):
+                        print("-1"*100)
                         gen_batch_output = self.actor_rollout_wg.generate_sequences(gen_batch)
 
                     batch.non_tensor_batch['uid'] = np.array([str(uuid.uuid4()) for _ in range(len(batch.batch))],
@@ -637,6 +655,7 @@ class RayPPOTrainer(object):
                     batch.meta_info['global_token_num'] = torch.sum(batch.batch['attention_mask'], dim=-1).tolist()
 
                     if self.use_reference_policy:
+                        print(f"use_reference_policy: {self.use_reference_policy}")
                         # compute reference log_prob
                         with _timer('ref', timing_raw):
                             ref_log_prob = self.ref_policy_wg.compute_ref_log_prob(batch)

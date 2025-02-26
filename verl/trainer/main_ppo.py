@@ -89,6 +89,7 @@ class RewardManager():
                 already_print_data_sources[data_source] += 1
                 print(sequences_str)
 
+        # 64, 1024
         return reward_tensor
 
 
@@ -107,6 +108,7 @@ def main(config):
 
 @ray.remote
 def main_task(config):
+    print(f"config: {config}")
     from verl.utils.fs import copy_local_path_from_hdfs
     from transformers import AutoTokenizer
 

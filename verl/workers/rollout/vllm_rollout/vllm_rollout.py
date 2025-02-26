@@ -68,6 +68,7 @@ class vLLMRollout(BaseRollout):
         """
         super().__init__()
         self.config = config
+        print(f"config: {config}")
         assert not (not config.enforce_eager and config.free_cache_engine), \
             "disable CUDA graph (enforce_eager = False) if free cache engine"
 
@@ -153,6 +154,7 @@ class vLLMRollout(BaseRollout):
         eos_token_id = prompts.meta_info['eos_token_id']
 
         batch_size = idx.size(0)
+        print(f"eos_token_id: {eos_token_id}, {self.pad_token_id}")
 
         idx_list = []
         # parse idx from torch.Tensor to List[List[str]]
@@ -160,14 +162,16 @@ class vLLMRollout(BaseRollout):
             idx_list.append(_pre_process_inputs(self.pad_token_id, idx[i]))
 
         do_sample = prompts.meta_info.get('do_sample', True)
+        print(f"do_sample: {do_sample}")
         if not do_sample:
             kwargs = {
                 'best_of': 1,
                 'top_p': 1.0,
                 'top_k': -1,
                 'min_p': 0.0,
-                'temperature': 0,
-                'n': 1  # if greedy, only 1 response
+                'temperature': 0,  # 默认是0
+                'n': 1,  # if greedy, only 1 response
+                'stop_token_ids': [eos_token_id, self.pad_token_id], # 默认没有这个
             }
 
         # users can customize different sampling_params at different run
@@ -204,7 +208,8 @@ class vLLMRollout(BaseRollout):
         # position_ids:   [0,0,0,0,0,1,2,3, | 4,5,6,7,8,9,10,11]
         response_position_ids = position_ids[:, -1:] + delta_position_id
         position_ids = torch.cat([position_ids, response_position_ids], dim=-1)
-        response_attention_mask = get_eos_mask(response_id=response, eos_token=eos_token_id, dtype=attention_mask.dtype)
+        # response_attention_mask = get_eos_mask(response_id=response, eos_token=eos_token_id, dtype=attention_mask.dtype)
+        response_attention_mask = get_eos_mask(response_id=response, eos_token=self.pad_token_id, dtype=attention_mask.dtype)
         attention_mask = torch.cat((attention_mask, response_attention_mask), dim=-1)
 
         # all the tp ranks should contain the same data here. data in all ranks are valid
