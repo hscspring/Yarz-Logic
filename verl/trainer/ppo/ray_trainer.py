@@ -637,13 +637,14 @@ class RayPPOTrainer(object):
                 with _timer('step', timing_raw):
                     # generate a batch
                     with _timer('gen', timing_raw):
-                        print("-1"*100)
                         gen_batch_output = self.actor_rollout_wg.generate_sequences(gen_batch)
 
                     batch.non_tensor_batch['uid'] = np.array([str(uuid.uuid4()) for _ in range(len(batch.batch))],
                                                              dtype=object)
                     # repeat to align with repeated responses in rollout
+                    # len=8
                     batch = batch.repeat(repeat_times=self.config.actor_rollout_ref.rollout.n, interleave=True)
+                    # len=8*rollout.n
                     batch = batch.union(gen_batch_output)
 
                     # balance the number of valid tokens on each dp rank.
@@ -654,8 +655,8 @@ class RayPPOTrainer(object):
                     # compute global_valid tokens
                     batch.meta_info['global_token_num'] = torch.sum(batch.batch['attention_mask'], dim=-1).tolist()
 
+                    print(f"use_reference_policy: {self.use_reference_policy}")
                     if self.use_reference_policy:
-                        print(f"use_reference_policy: {self.use_reference_policy}")
                         # compute reference log_prob
                         with _timer('ref', timing_raw):
                             ref_log_prob = self.ref_policy_wg.compute_ref_log_prob(batch)

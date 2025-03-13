@@ -211,7 +211,8 @@ class DataParallelPPOActor(BasePPOActor):
         select_keys = ['responses', 'input_ids', 'attention_mask', 'position_ids', 'old_log_probs', 'advantages']
         if self.config.use_kl_loss:
             select_keys.append('ref_log_prob')
-        # len=8
+        # len=8 等于rollout.n
+        # print(f"Len data update policy: {len(data)}")
         batch = data.select(batch_keys=select_keys).batch
 
         # Split to make minibatch iterator for updating the actor
