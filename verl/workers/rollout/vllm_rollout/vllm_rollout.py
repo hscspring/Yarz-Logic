@@ -169,7 +169,7 @@ class vLLMRollout(BaseRollout):
                 'top_p': 1.0,
                 'top_k': -1,
                 'min_p': 0.0,
-                'temperature': 0,  # 默认是0
+                'temperature': 0.0,  # 默认是0
                 'n': 1,  # if greedy, only 1 response
                 'stop_token_ids': [eos_token_id, self.pad_token_id], # 默认没有这个
             }

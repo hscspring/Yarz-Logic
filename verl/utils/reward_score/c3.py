@@ -30,73 +30,6 @@ def extract_solution(solution_str: str) -> Tuple[Optional[str], str]:
     final_answer = matches[-1].group(1).strip()
     return final_answer, processed_str
 
-def parse_solution_text_format(solution_text: str) -> Dict[str, str]:
-    """Parses ground truth solution text into status dictionary.
-    
-    Args:
-        solution_text: Formatted solution text from dataset
-        
-    Returns:
-        Dictionary mapping character names to their roles (knight/knave)
-    """
-    status_dict = {}
-    print("\n[Ground Truth Parsing]")
-    
-    for line in solution_text.split('\n'):
-        line = line.strip()
-        if not line:
-            continue
-            
-        match = re.search(r'\b([A-Za-z]+)\b.*?\b(knight|knave)\b', line, re.IGNORECASE)
-        if match:
-            name, role = match.groups()
-            status_dict[name] = role.lower()
-            print(f"  Found: {name} → {role}")
-        else:
-            ...
-            print(f"  [Warning] Unparseable line: '{line}'")
-    
-    return status_dict
-
-def parse_model_answer(answer_text: str, expected_names: list) -> Optional[Dict[str, str]]:
-    """Parses model's answer text into status dictionary.
-    
-    Args:
-        answer_text: Text extracted from model's <answer> tags
-        expected_names: List of character names requiring identification
-        
-    Returns:
-        Dictionary mapping character names to predicted roles, or None if incomplete
-    """
-    status_dict = {}
-    print("\n[Model Answer Parsing]")
-    print(f"  Expected characters: {expected_names}")
-
-    knight_count = answer_text.lower().count('knight')
-    knave_count = answer_text.lower().count('knave')
-
-    print(f"  Number of predicted roles: {knight_count + knave_count}")
-    if knight_count + knave_count != len(expected_names):
-        print(f"  [Error] Number of characters mismatch: {knight_count + knave_count} != {len(expected_names)}")
-        return None
-
-    for name in expected_names:
-        pattern = re.compile(
-            rf'\b{re.escape(name)}\b\s+is\s+a\s+\b(knight|knave)\b', 
-            re.IGNORECASE
-        )
-        match = pattern.search(answer_text)
-        
-        if match:
-            role = match.group(1).lower()
-            status_dict[name] = role
-            print(f"  Found: {name} → {role}")
-        else:
-            print(f"  [Error] Missing identification for {name}")
-            return None
-    
-    return status_dict
-
 def validate_response_structure(processed_str: str) -> bool:
     """Performs comprehensive validation of response structure.
     
@@ -159,10 +92,8 @@ def compute_score(solution_str: str,
     print(" Processing New Sample ".center(80, '='))
     
     # Parse ground truth data
-    solution_text = ground_truth.get('solution_text_format', '')
-    gt_status = parse_solution_text_format(solution_text)
-    expected_names = list(gt_status.keys())
-    print(f"[Ground Truth] Final identities: {gt_status}")
+    gt_text = ground_truth.get('solution_text_format', '')
+    print(f"[Ground Truth] Final identities: {gt_text}")
 
     # Extract model answer
     answer_text, processed_str = extract_solution(solution_str)
@@ -177,21 +108,16 @@ def compute_score(solution_str: str,
     # Validate answer content
     answer_score = 0
     if format_correct and answer_text:
-        pred_status = parse_model_answer(answer_text, expected_names)
-        if pred_status:
-            print(f"\n[Content Validation]")
-            print(f"  Expected: {gt_status}")
-            print(f"  Predicted: {pred_status}")
+        print(f"\n[Content Validation]")
+        print(f"  Expected: {gt_text}")
+        print(f"  Predicted: {answer_text}")
             
-            if pred_status == gt_status:
-                answer_score = 2
-                print("  Content validation: FULL MATCH")
-            else:
-                answer_score = -1.5
-                print("  Content validation: MISMATCH")
+        if str(gt_text) == str(answer_text):
+            answer_score = 2
+            print("  Content validation: FULL MATCH")
         else:
-            answer_score = -2
-            print( "Fail to parse answer")
+            answer_score = -1.5
+            print("  Content validation: MISMATCH")
     else:
         answer_score = -2
         print("\n[Content Validation] Skipped due to format errors or missing answer")

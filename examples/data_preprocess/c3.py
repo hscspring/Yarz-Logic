@@ -50,6 +50,10 @@ if __name__ == '__main__':
                     "role": "user",
                     "content": question,
                 }],
+                "reward_model": {
+                    "style": "rule",
+                    "ground_truth": solution,
+                },
                 "extra_info": {
                     'split': split,
                     'index': idx,
