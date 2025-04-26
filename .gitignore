@@ -1,4 +1,4 @@
-*.sh
+main_*test.sh
 Llama-3.1-8B
 qwen*/
 Qwen*/

@@ -1,3 +1,32 @@
+# Yarz Logic
+
+Follow the origin repo to install.
+
+## Data
+
+```bash
+# c3
+examples/data_preprocess/c3.py
+# kk_nothink
+examples/data_preprocess/kk_nothink.py
+```
+
+## Reward
+
+```bash
+# c3
+verl/utils/reward_score/c3.py
+# kk newreward
+verl/utils/reward_score/kk_newreward.py
+# kk nothink
+verl/utils/reward_score/kk_nothink.py
+```
+
+Have fun.
+
+---
+
+(Origin README)
 
 # Logic Rl
 
