@@ -151,6 +151,7 @@ trainer:
   experiment_name: gsm8k
   logger: [ 'console', 'wandb' ]
   nnodes: 1
+  val_only: false
   n_gpus_per_node: 8
   save_freq: -1
   test_freq: -1
