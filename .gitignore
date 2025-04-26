@@ -4,7 +4,6 @@ qwen*/
 Qwen*/
 Qwen1.5-*
 Qwen2.5-*
-data/
 **/*.pt
 **/checkpoints
 **/wget-log
